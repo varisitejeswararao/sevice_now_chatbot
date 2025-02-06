@@ -1,0 +1,53 @@
+from PyPDF2 import PdfReader
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+
+def modify_pdf(input_pdf, output_pdf):
+    # Step 1: Read the PDF
+    reader = PdfReader(input_pdf)
+    all_text = ""
+    for page in reader.pages:
+        all_text += page.extract_text()
+
+    # Split into lines
+    lines = all_text.split('\n')
+    
+    # Step 2: Create a new PDF
+    c = canvas.Canvas(output_pdf, pagesize=letter)
+    x, y = 50, 750  # Starting position on the page
+
+    for i, line in enumerate(lines):
+        if y < 50:  # Start a new page if space runs out
+            c.showPage()
+            y = 750
+
+        # Add original line
+        c.drawString(x, y, line)
+        y -= 15  # Space after the original line
+
+        # Strike through two words (example: first two words)
+        words = line.split()
+        if len(words) >= 2:
+            c.setStrokeColor(colors.red)
+            c.line(x, y + 7, x + 150, y + 7)  # Line above for strike-through
+            c.drawString(x, y, " ".join(words[:2]))
+            y -= 15
+
+        # Gap of one line and underline three words
+        if len(words) >= 5:  # Ensure enough words exist
+            y -= 15  # Add one line gap
+            c.setStrokeColor(colors.black)
+            underline_text = " ".join(words[2:5])  # Next three words
+            c.drawString(x, y, underline_text)
+            c.line(x, y - 2, x + 150, y - 2)  # Line below for underline
+            y -= 15
+
+    c.save()
+
+# Input and output files
+input_pdf = "input.pdf"
+output_pdf = "output.pdf"
+modify_pdf(input_pdf, output_pdf)
+
+print(f"Modified PDF saved as {output_pdf}")
