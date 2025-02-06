@@ -1,0 +1,55 @@
+import fitz  # PyMuPDF
+import csv
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+
+def extract_and_modify_pdf(input_pdf, csv_file, new_pdf):
+    # Open the PDF
+    doc = fitz.open(input_pdf)
+    
+    # Step 1: Extract underline data
+    underlined_texts = []
+    new_pdf_lines = []
+    
+    for page_num, page in enumerate(doc):
+        blocks = page.get_text("blocks")  # Extract text blocks
+        
+        for block in blocks:
+            lines = block[4].split("\n")  # Get lines from the block
+            for line in lines:
+                if "__" in line:  # Assuming "__" indicates underlined text
+                    underlined_words = [word for word in line.split() if "__" in word]
+                    underlined_texts.extend(underlined_words)
+                else:
+                    new_pdf_lines.append(line)  # Keep lines without strike-through
+                
+    # Save underlined data to a CSV file
+    with open(csv_file, "w", newline="") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["Underlined Text"])
+        for text in underlined_texts:
+            writer.writerow([text])
+    
+    print(f"Underlined data saved to {csv_file}")
+    
+    # Step 2: Create a new PDF without strike-through data
+    c = canvas.Canvas(new_pdf, pagesize=letter)
+    x, y = 50, 750  # Starting position on the page
+    
+    for line in new_pdf_lines:
+        if y < 50:  # Start a new page if space runs out
+            c.showPage()
+            y = 750
+        c.drawString(x, y, line)
+        y -= 15  # Space between lines
+    
+    c.save()
+    print(f"New PDF saved to {new_pdf}")
+
+# Input and output files
+input_pdf = "modified_sample.pdf"  # Modified PDF (output from the first step)
+csv_file = "underlined_data.csv"   # CSV to store underlined text
+new_pdf = "final_pdf_without_strike.pdf"  # New PDF without strike-through text
+
+# Run the function
+extract_and_modify_pdf(input_pdf, csv_file, new_pdf)
