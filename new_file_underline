@@ -1,0 +1,79 @@
+import fitz  # PyMuPDF
+import xml.etree.ElementTree as ET
+from bs4 import BeautifulSoup
+
+def process_pdf(input_pdf, output_pdf, output_xml):
+    # Open the PDF
+    pdf_document = fitz.open(input_pdf)
+    updated_texts = []
+
+    for page_num in range(len(pdf_document)):
+        page = pdf_document[page_num]
+
+        # Extract text
+        text = page.get_text("text")
+        annotations = page.annots()
+
+        if annotations:
+            for annot in annotations:
+                annot_type = annot.info["type"]
+                
+                # Handle underline: Mark as updated
+                if annot_type == fitz.PDF_ANNOT_UNDERLINE:
+                    updated_text = annot.info["content"]
+                    updated_texts.append(updated_text)
+
+                # Handle strikethrough: Remove from text
+                elif annot_type == fitz.PDF_ANNOT_STRIKEOUT:
+                    striked_text = annot.info["content"]
+                    text = text.replace(striked_text, "")
+
+        # Update page content
+        page.insert_text(text, fontsize=12)
+
+    # Save the modified PDF
+    pdf_document.save(output_pdf)
+
+    # Save updated text to XML
+    root = ET.Element("Updates")
+    for updated_text in updated_texts:
+        ET.SubElement(root, "UpdatedText").text = updated_text
+    tree = ET.ElementTree(root)
+    tree.write(output_xml, encoding="utf-8", xml_declaration=True)
+
+    print(f"Modified PDF saved at: {output_pdf}")
+    print(f"Updated XML saved at: {output_xml}")
+
+
+def process_html(input_html, output_html, output_xml):
+    # Parse HTML
+    with open(input_html, "r", encoding="utf-8") as file:
+        soup = BeautifulSoup(file, "html.parser")
+
+    updated_texts = []
+
+    # Handle strikethrough and underline
+    for tag in soup.find_all(["s", "u"]):  # 's' for strikethrough, 'u' for underline
+        if tag.name == "s":
+            tag.decompose()  # Remove strikethrough
+        elif tag.name == "u":
+            updated_texts.append(tag.text)
+
+    # Save modified HTML
+    with open(output_html, "w", encoding="utf-8") as file:
+        file.write(str(soup))
+
+    # Save updated text to XML
+    root = ET.Element("Updates")
+    for updated_text in updated_texts:
+        ET.SubElement(root, "UpdatedText").text = updated_text
+    tree = ET.ElementTree(root)
+    tree.write(output_xml, encoding="utf-8", xml_declaration=True)
+
+    print(f"Modified HTML saved at: {output_html}")
+    print(f"Updated XML saved at: {output_xml}")
+
+
+# Example Usage
+process_pdf("input.pdf", "output.pdf", "updates.xml")
+process_html("input.html", "output.html", "updates.xml")
