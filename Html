@@ -1,0 +1,24 @@
+import pandas as pd
+from bs4 import BeautifulSoup
+
+# Load Excel sheet
+excel_file = "your_excel_file.xlsx"  # Replace with your Excel file path
+sheet_name = "Sheet1"  # Replace with your sheet name if needed
+excel_data = pd.read_excel(excel_file, sheet_name=sheet_name)
+
+# Load HTML file
+html_file = "your_html_file.html"  # Replace with your HTML file path
+with open(html_file, "r", encoding="utf-8") as file:
+    html_content = file.read()
+
+# Parse HTML content
+soup = BeautifulSoup(html_content, "html.parser")
+
+# Iterate through Excel data and search in HTML
+for index, row in excel_data.iterrows():
+    for col in excel_data.columns:
+        value = str(row[col]).strip()  # Convert cell value to string and strip whitespace
+        if value in soup.get_text():
+            print(f"Found '{value}' in HTML file.")
+        else:
+            print(f"'{value}' not found in HTML file.")
