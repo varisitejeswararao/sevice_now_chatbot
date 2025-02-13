@@ -34,3 +34,32 @@ if data:
     print(f"Data extracted and saved to {excel_file}")
 else:
     print("No data found in the specified HTML file.")
+
+
+from bs4 import BeautifulSoup
+
+# Load the HTML file
+html_file = "path_to_your_nccn_document.html"  # Replace with your HTML file path
+
+with open(html_file, "r", encoding="utf-8") as file:
+    soup = BeautifulSoup(file, "html.parser")
+
+# Search for keywords in the HTML to locate the data
+keywords = ["Drug Type", "Cancer Type", "Regimen Code", "Regimen ID"]  # Replace with your column names
+for keyword in keywords:
+    found = soup.find_all(string=lambda text: text and keyword in text)
+    if found:
+        print(f"Keyword '{keyword}' found in the following tags:")
+        for result in found:
+            print(result)
+            print("Parent Tag:", result.parent)
+            print("-" * 40)
+    else:
+        print(f"Keyword '{keyword}' not found.")
+
+# Optional: Explore tables if the data might be there
+tables = soup.find_all("table")
+for index, table in enumerate(tables):
+    print(f"Table {index + 1}:")
+    print(table.prettify())  # Print the structure of the table
+    print("-" * 40)
