@@ -1,0 +1,49 @@
+from bs4 import BeautifulSoup
+import pandas as pd
+
+# Load the HTML file
+html_file = "path_to_your_nccn_document.html"  # Replace with your HTML file path
+
+with open(html_file, "r", encoding="utf-8") as file:
+    soup = BeautifulSoup(file, "html.parser")
+
+# Initialize a list to store extracted data
+data = []
+
+# Locate the table with ID "export-template-info-section"
+table = soup.find("table", id="export-template-info-section")
+if table:
+    # Extract the indication
+    indication_tag = table.find("td", id="export-template-indication")
+    if indication_tag:
+        indication_header = indication_tag.find("h4").text.strip()
+        indication_value = indication_tag.find("span").text.strip()
+    else:
+        indication_header, indication_value = "INDICATION", "Not Found"
+
+    # Extract references
+    references_tag = table.find("td", id="export-template-references")
+    if references_tag:
+        references_header = references_tag.find("h4").text.strip()
+        references = [a.text.strip() for a in references_tag.find_all("a")]
+    else:
+        references_header, references = "REFERENCES", ["Not Found"]
+
+    # Append data to the list
+    data.append({
+        "Indication Header": indication_header,
+        "Indication Value": indication_value,
+        "References Header": references_header,
+        "References": ", ".join(references)  # Combine all references into a single string
+    })
+else:
+    print("Table with ID 'export-template-info-section' not found.")
+
+# Convert extracted data to a DataFrame and save to Excel
+if data:
+    df = pd.DataFrame(data)
+    excel_file = "extracted_nccn_data.xlsx"
+    df.to_excel(excel_file, index=False)
+    print(f"Data extracted and saved to {excel_file}")
+else:
+    print("No data extracted from the HTML file.")
