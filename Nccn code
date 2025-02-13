@@ -1,0 +1,36 @@
+
+from bs4 import BeautifulSoup
+import pandas as pd
+
+# Load the HTML file
+html_file = "path_to_your_nccn_document.html"  # Replace with the path to your HTML file
+
+with open(html_file, "r", encoding="utf-8") as file:
+    soup = BeautifulSoup(file, "html.parser")
+
+# Example: Extract table data (if your data is in tables)
+data = []
+table = soup.find("table")  # Replace with the specific table tag or ID if necessary
+if table:
+    headers = [header.text.strip() for header in table.find_all("th")]  # Extract headers
+    rows = table.find_all("tr")
+    for row in rows[1:]:  # Skip the header row
+        cells = row.find_all("td")
+        data.append([cell.text.strip() for cell in cells])
+
+# Example: Extract data from specific tags (if your data is in <div>, <p>, etc.)
+# Uncomment the lines below if applicable to your case
+# for div in soup.find_all("div", class_="regimen"):  # Adjust class name or tag
+#     regimen_id = div.find("span", class_="regimen-id").text.strip()
+#     drug_type = div.find("span", class_="drug-type").text.strip()
+#     cancer_type = div.find("span", class_="cancer-type").text.strip()
+#     data.append([regimen_id, drug_type, cancer_type])
+
+# Save the extracted data to Excel
+if data:
+    df = pd.DataFrame(data, columns=headers)  # Use extracted headers if available
+    excel_file = "extracted_nccn_data.xlsx"
+    df.to_excel(excel_file, index=False)
+    print(f"Data extracted and saved to {excel_file}")
+else:
+    print("No data found in the specified HTML file.")
