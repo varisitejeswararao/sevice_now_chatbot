@@ -1,0 +1,52 @@
+from bs4 import BeautifulSoup
+import pandas as pd
+
+# Load the HTML file
+html_file = "path_to_your_nccn_document.html"  # Replace with the actual HTML file path
+with open(html_file, "r", encoding="utf-8") as file:
+    soup = BeautifulSoup(file, "html.parser")
+
+# Define the column names for the Excel sheet
+columns = [
+    "Regimen Name",
+    "Regimen ID Number",
+    "Supportive Care Info",
+    "Drug 1 Name",
+    "Drug 1 Code",
+    "Drug 1 Frequency",
+    "Drug 1 Route",
+    "Drug 1 Infusion Time",
+    "Cycle Days",
+    "Number of Cycles"
+]
+
+# Initialize a list to store rows of data
+data = []
+
+# Parse the data (customize based on your HTML structure)
+# Example: Replace 'table', 'tr', 'td' with appropriate tags and class names from your HTML
+rows = soup.find_all("tr")  # Assuming the data is in table rows
+
+for row in rows:
+    cells = row.find_all("td")
+    if len(cells) >= 10:  # Adjust based on the number of columns
+        data.append({
+            "Regimen Name": cells[0].text.strip() if cells[0] else "",
+            "Regimen ID Number": cells[1].text.strip() if cells[1] else "",
+            "Supportive Care Info": cells[2].text.strip() if cells[2] else "",
+            "Drug 1 Name": cells[3].text.strip() if cells[3] else "",
+            "Drug 1 Code": cells[4].text.strip() if cells[4] else "",
+            "Drug 1 Frequency": cells[5].text.strip() if cells[5] else "",
+            "Drug 1 Route": cells[6].text.strip() if cells[6] else "",
+            "Drug 1 Infusion Time": cells[7].text.strip() if cells[7] else "",
+            "Cycle Days": cells[8].text.strip() if cells[8] else "",
+            "Number of Cycles": cells[9].text.strip() if cells[9] else ""
+        })
+
+# Convert to DataFrame
+df = pd.DataFrame(data, columns=columns)
+
+# Save the DataFrame to an Excel file
+output_file = "extracted_regimen_data.xlsx"
+df.to_excel(output_file, index=False)
+print(f"Data extracted and saved to {output_file}")
