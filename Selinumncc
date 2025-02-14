@@ -1,0 +1,15 @@
+from selenium import webdriver
+
+driver = webdriver.Chrome()
+driver.get("file:///path/to/nccn_email.html")
+
+# Wait for JavaScript to load (modify based on content loading time)
+driver.implicitly_wait(5)
+
+# Extract full page source after rendering
+html_content = driver.page_source
+driver.quit()
+
+# Process extracted content with BeautifulSoup
+soup = BeautifulSoup(html_content, "html.parser")
+print(soup.prettify())  # Check where the data appears
