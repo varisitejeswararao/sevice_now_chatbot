@@ -1,0 +1,65 @@
+from bs4 import BeautifulSoup
+import pandas as pd
+
+# Load the HTML file
+html_file = "nccn_sample.html"  # Change to your file path
+
+with open(html_file, "r", encoding="utf-8", errors="ignore") as file:
+    soup = BeautifulSoup(file, "html.parser")
+
+# Dictionary to store extracted data
+data_dict = {
+    "Indication": None,
+    "Primary Stage": None,
+    "Chemotherapy Regimen": None,
+    "Supportive Care": None,
+    "Emetic Risk": None,
+    "Febrile Neutropenia Risk": None
+}
+
+# Extract data
+indication = soup.find(string="INDICATION:")
+if indication:
+    data_dict["Indication"] = indication.find_next().text.strip()
+
+primary_stage = soup.find(string="Primary:")
+if primary_stage:
+    data_dict["Primary Stage"] = primary_stage.find_next().text.strip()
+
+# Extract Chemotherapy Regimen
+chemo_section = soup.find(string="Chemotherapy Regimen")
+if chemo_section:
+    chemo_details = []
+    for item in chemo_section.find_all_next("li"):
+        chemo_details.append(item.text.strip())
+        if "Followed by" in item.text or "OR" in item.text:
+            break
+    data_dict["Chemotherapy Regimen"] = "\n".join(chemo_details)
+
+# Extract Supportive Care
+supportive_section = soup.find(string="NCCN SUPPORTIVE CARE:")
+if supportive_section:
+    supportive_details = []
+    for item in supportive_section.find_all_next("li"):
+        supportive_details.append(item.text.strip())
+        if "Antiemetic Therapy" in item.text:
+            break
+    data_dict["Supportive Care"] = "\n".join(supportive_details)
+
+# Extract Risks
+emetic_risk = soup.find(string="Emetic risk:")
+if emetic_risk:
+    data_dict["Emetic Risk"] = emetic_risk.find_next().text.strip()
+
+febrile_risk = soup.find(string="Febrile Neutropenia Risk:")
+if febrile_risk:
+    data_dict["Febrile Neutropenia Risk"] = febrile_risk.find_next().text.strip()
+
+# Convert extracted data into a DataFrame
+df = pd.DataFrame([data_dict])
+
+# Save to Excel
+excel_path = "nccn_extracted_data.xlsx"
+df.to_excel(excel_path, index=False, engine="openpyxl")
+
+print("Extraction complete! Data saved to:", excel_path)
