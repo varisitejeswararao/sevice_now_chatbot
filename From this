@@ -1,0 +1,12 @@
+{
+    "user123": [
+        {
+            "timestamp": "20250218103045",
+            "messages": [
+                { "role": "bot", "message": "Hello! How can I help?" },
+                { "role": "user", "message": "I need help with login." },
+                { "role": "bot", "message": "Please provide your user ID." }
+            ]
+        }
+    ]
+}
