@@ -1,0 +1,151 @@
+from flask import Flask, render_template, request, jsonify
+import json
+import os
+from datetime import datetime
+
+app = Flask(__name__, template_folder="./frontend/templates", static_folder="./frontend/static")
+
+# File to store chatbot responses
+CHATBOT_JSON_FILE = "chatbot_responses.json"
+
+@app.route('/')
+def login_page():
+    return render_template('index.html')
+
+@app.route('/index.html')
+def index():
+    return render_template('index.html')
+
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
+
+@app.route('/offers')
+def offers():
+    return render_template('offers.html')
+
+@app.route('/chatbot')
+def chatbot():
+    return render_template('chatbot.html')
+
+# Store chatbot responses in JSON
+@app.route('/save-responses', methods=['POST'])
+def save_responses():
+    try:
+        data = request.json
+        user_id = data.get('user_id', 'anonymous')
+        messages = data.get('messages', [])
+
+        if not messages:
+            return jsonify({"error": "No messages received"}), 400
+
+        current_timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+
+        # Ensure JSON file exists
+        if not os.path.exists(CHATBOT_JSON_FILE):
+            with open(CHATBOT_JSON_FILE, 'w') as f:
+                json.dump({}, f, indent=4)
+
+        # Load existing responses
+        with open(CHATBOT_JSON_FILE, 'r') as f:
+            responses = json.load(f)
+
+        # Append to user history
+        if user_id not in responses:
+            responses[user_id] = []
+        responses[user_id].append({"timestamp": current_timestamp, "messages": messages})
+
+        # Save back to file
+        with open(CHATBOT_JSON_FILE, 'w') as f:
+            json.dump(responses, f, indent=4)
+
+        return jsonify({"status": "success", "message": "Chat response saved successfully!"})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Fetch questions from a JSON file
+@app.route('/get-questions/<topic>', methods=['GET'])
+def get_questions(topic):
+    try:
+        with open('chatbot_questions.json') as f:
+            dct = json.load(f)
+
+        for category in dct['categories']:
+            if category['name'] == topic:
+                return jsonify(category['questions'])
+
+        return jsonify({"error": "Topic not found"}), 404
+
+    except FileNotFoundError:
+        return jsonify({"error": "Questions file not found"}), 500
+
+    except json.JSONDecodeError:
+        return jsonify({"error": "Error decoding JSON"}), 500
+
+# Process incident requests
+@app.route('/process-incident', methods=['POST'])
+def process_incident():
+    try:
+        data = request.json
+        description = data.get('description', '').strip()
+        if not description:
+            return jsonify({"error": "No description provided"}), 400
+
+        # Call function from service_resolution.py
+        result, status_code = handle_incident_request(data)
+        return jsonify(result), status_code
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Create an incident
+@app.route('/create-incident', methods=['POST'])
+def create_incident_route():
+    try:
+        data = request.json
+        description = data.get('description', '').strip()
+        if not description:
+            return jsonify({"error": "No description provided"}), 400
+
+        # Call function from incident_creation.py
+        incident_number = create_incident(description)
+        return jsonify({"incident_number": incident_number}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Check incident status
+@app.route('/check-incident', methods=['POST'])
+def check_incident():
+    try:
+        data = request.json
+        incident_number = data.get('incident_number', '').strip()
+        if not incident_number:
+            return jsonify({"error": "No incident number provided"}), 400
+
+        # Call function from service_resolution.py
+        result, status_code = check_incident_exists(incident_number)
+        return jsonify(result), status_code
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# Update an incident
+@app.route('/update-incident', methods=['POST'])
+def update_incident():
+    try:
+        data = request.json
+        incident_number = data.get('incident_number', '').strip()
+        if not incident_number:
+            return jsonify({"error": "No incident number provided"}), 400
+
+        # Call function from service_resolution.py
+        result, status_code = update_incident_request(incident_number)
+        return jsonify(result), status_code
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
