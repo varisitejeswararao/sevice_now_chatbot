@@ -1,0 +1,15 @@
+Jsondatafile
+{
+  "NP101": {
+    "title": "Welcome to NP101 Support",
+    "session_timeout": 10,
+    "dashboard_url": "https://dashboard.np101.com",
+    "assignment_group": "Support Group NP101"
+  },
+  "NP102": {
+    "title": "Welcome to NP102 Help",
+    "session_timeout": 15,
+    "dashboard_url": "https://dashboard.np102.com",
+    "assignment_group": "Support Group NP102"
+  }
+}
