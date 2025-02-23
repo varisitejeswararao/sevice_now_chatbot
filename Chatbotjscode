@@ -1,0 +1,71 @@
+document.addEventListener("DOMContentLoaded", function () {
+
+    const chatbotBtn = document.getElementById("chatbotBtn");
+    const chatbotPopup = document.getElementById("chatbotPopup");
+    const closeChatbotBtn = document.getElementById("closeChatbot");
+    const chatbotFrame = document.getElementById("chatbotFrame");
+    const createTicket = document.getElementById("create-ticket");
+    const updateTicket = document.getElementById("update-ticket");
+
+    chatbotBtn.addEventListener("click", () => openChatbot(""));
+    closeChatbotBtn.addEventListener("click", closeChatbot);
+    createTicket.addEventListener("click", () => openChatbot("SNOWCreate"));
+    updateTicket.addEventListener("click", () => openChatbot("SNOWUpdate"));
+
+    function openChatbot(program) {
+        chatbotPopup.style.display = "block";
+        chatbotBtn.style.display = "none";
+        chatbotFrame.src = "http://127.0.0.1:5000/chatbot";
+        
+        chatbotFrame.onload = () => {
+            chatbotFrame.contentWindow.postMessage(
+                {
+                    type: "INITIALIZE_CHAT",
+                    program: program,
+                },
+                "*"
+            );
+        };
+    }
+
+    function closeChatbot() {
+        chatbotPopup.style.display = "none";
+        chatbotBtn.style.display = "flex";
+        chatbotFrame.src = "about:blank";
+    }
+
+    // ✅ Fetch config dynamically from Flask API instead of GitHub
+    async function fetchConfig() {
+        try {
+            const response = await fetch("http://127.0.0.1:5000/api/config");
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const config = await response.json();
+            console.log("Config Loaded:", config);
+
+            // ✅ Dynamically update chatbot title & settings
+            const selectedService = "NP101"; // You can modify this dynamically
+            document.getElementById("title").innerText = config[selectedService].title;
+            document.getElementById("session_timeout").innerText = "Session Timeout: " + config[selectedService].session_timeout + " minutes";
+            document.getElementById("dashboard_url").href = config[selectedService].dashboard_url;
+            document.getElementById("dashboard_url").innerText = "Go to Dashboard";
+
+        } catch (error) {
+            console.error("Error fetching config:", error);
+        }
+    }
+
+    // ✅ Load chatbot config on page load
+    fetchConfig();
+
+    // ✅ Listen for chatbot events
+    window.addEventListener("message", function (event) {
+        if (event.data.type === "CHATBOT_READY") {
+            console.log("Chatbot is ready");
+        } else if (event.data.type === "CLOSE_CHATBOT") {
+            closeChatbot();
+        }
+    });
+
+});
